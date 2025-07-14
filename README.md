@@ -1,13 +1,14 @@
 # AI Storyteller Agent
 
-A modern, production-ready AI application for generating children's stories and illustrated storybooks. This application provides both a chat interface and REST API for story generation with automatic illustration and PDF creation.
+A modern, production-ready AI application for generating children's stories and illustrated storybooks. This application provides both a chat interface and REST API for story generation with automatic illustration, PDF creation, and expressive audio narration.
 
 ## Features
 
 - 🤖 **AI-Powered Story Generation**: Generate engaging children's stories using advanced language models
 - 🎨 **Automatic Illustration**: Create storybook illustrations using AI image generation
 - 📚 **PDF Storybook Creation**: Automatically generate PDF storybooks with text and images
-- 💬 **Interactive Chat Interface**: Chainlit-based chat interface for story creation
+- 🔊 **Expressive Audio Narration**: Generate dynamic, emotional audio narration (MP3) using OpenVoice V2 + MeloTTS
+- 💬 **Interactive Chat Interface**: Chainlit-based chat interface for story creation and narration
 - 🔌 **REST API**: Full REST API for integration with other applications
 - 🎯 **Age-Appropriate Content**: Tailored story length and content for different age groups
 - 🔧 **Modular Architecture**: Clean, maintainable codebase following best practices
@@ -79,7 +80,7 @@ app/
 
    **Chat Interface (Chainlit):**
    ```bash
-   python app/main.py
+   chainlit run app/main.py
    ```
 
    **REST API:**
@@ -125,11 +126,11 @@ Set `AI_MODEL_CONFIG` in your environment to switch between models.
 
 ## Usage
 
-### Chat Interface
+### Chat Interface (Chainlit)
 
 1. Start the Chainlit application:
    ```bash
-   python app/main.py
+   chainlit run app/main.py
    ```
 
 2. Open your browser to the provided URL (usually `http://localhost:8000`)
@@ -138,6 +139,7 @@ Set `AI_MODEL_CONFIG` in your environment to switch between models.
    - Ask for a story about specific characters or themes
    - Provide images for context
    - Request storybook illustrations
+   - **Request audio narration**: Say things like "I would like to listen to this story" or "Can you narrate this for me?" to receive expressive audio narration (MP3) of your story.
 
 ### REST API
 
@@ -180,7 +182,21 @@ Content-Type: application/json
       "page_text": "Once upon a time...",
       "page_picture_description": "A cozy mouse hole"
     }
-  ]
+  ],
+  "output_type": "audio"  # Use "audio", "pdf", or "audio_pdf"
+}
+```
+
+#### Flexible Story Generation (Text, Audio, PDF)
+```bash
+POST /api/v1/story
+Content-Type: application/json
+
+{
+  "messages": [
+    { "role": "user", "content": "Tell me a story about a magical forest" }
+  ],
+  "output_type": "audio"  # or "pdf", "audio_pdf", "text"
 }
 ```
 
@@ -195,31 +211,68 @@ When running the API server, visit:
 - **Swagger UI**: `http://localhost:8000/docs`
 - **ReDoc**: `http://localhost:8000/redoc`
 
+## Audio Narration
+
+Loomi can generate expressive audio narration for any story, using OpenVoice V2 and MeloTTS for dynamic, emotional storytelling.
+
+### Audio Features
+- 🎤 **Expressive Narration**: Audio adapts to the story's emotions, with changes in tone, rhythm, and character voices
+- 🗣️ **Dynamic Voice Styles**: Per-segment voice style switching for laughter, excitement, gentle moments, and more
+- 🔄 **Flexible Output**: Generate audio-only, audio+PDF, or classic text storybooks
+- 📥 **Downloadable MP3**: Receive high-quality MP3 narration via API or Chainlit
+
+### How to Request Audio
+- **In Chainlit**: After generating a story, say "I would like to listen to this story" or "Can you narrate this for me?"
+- **Via API**: Set `output_type` to `audio` or `audio_pdf` in your request
+
+### Example: Requesting Audio in Chainlit
+```
+User: Tell me a story about a dragon and a princess
+AI: [Story is generated]
+User: Can you narrate this for me?
+AI: [Sends MP3 audio narration file]
+```
+
+### Example: Requesting Audio via API
+```
+POST /api/v1/story
+{
+  "messages": [
+    { "role": "user", "content": "Tell me a story about a dragon and a princess" }
+  ],
+  "output_type": "audio"
+}
+```
+
+## Flexible Prompt System
+
+Loomi uses a modular, composable prompt architecture:
+- **Base Prompts**: For classic story structure
+- **Audio Prompts**: For expressive, narration-optimized stories
+- **Image Prompts**: For vivid illustration descriptions
+- **Prompt Factory**: Combine prompts for any output type (text, audio, image, or all)
+
+## Testing & Continuous Integration
+
+- All tests are in the `tests/` folder (unit, integration, and fixtures)
+- Run tests with:
+  ```bash
+  pytest tests/
+  ```
+- Lint, format, and type-check with:
+  ```bash
+  flake8 app/ tests/
+  black app/ tests/
+  mypy app/
+  ```
+- GitHub Actions CI runs tests, lint, and security checks on every push/PR
+
 ## Development
 
 ### Setup Development Environment
 
 ```bash
 pip install -r requirements-dev.txt
-```
-
-### Running Tests
-
-```bash
-pytest tests/
-```
-
-### Code Quality
-
-```bash
-# Format code
-black app/ tests/
-
-# Lint code
-flake8 app/ tests/
-
-# Type checking
-mypy app/
 ```
 
 ### Project Structure Guidelines
@@ -238,8 +291,9 @@ mypy app/
 1. **Story Generator**: AI-powered story creation with age-appropriate content
 2. **Image Generator**: AI image generation for storybook illustrations
 3. **PDF Generator**: Automatic PDF creation with text and images
-4. **Chat Interface**: Interactive conversation with the AI storyteller
-5. **REST API**: Programmatic access to all functionality
+4. **Audio Generator**: Expressive, dynamic audio narration (MP3)
+5. **Chat Interface**: Interactive conversation with the AI storyteller
+6. **REST API**: Programmatic access to all functionality
 
 ### Service Layer
 
@@ -252,26 +306,6 @@ mypy app/
 - **Database Models**: SQLAlchemy models for data persistence
 - **API Models**: Pydantic models for request/response validation
 
-## Deployment
-
-### Docker
-
-```bash
-# Build image
-docker build -t ai-storyteller .
-
-# Run container
-docker run -p 8000:8000 ai-storyteller
-```
-
-### Production Considerations
-
-1. **Environment Variables**: Use proper secret management
-2. **Database**: Use production database (PostgreSQL, MySQL)
-3. **Caching**: Implement Redis for session management
-4. **Monitoring**: Add logging and monitoring
-5. **Security**: Implement proper authentication and authorization
-
 ## Contributing
 
 1. Fork the repository
@@ -283,13 +317,6 @@ docker run -p 8000:8000 ai-storyteller
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the documentation
-- Review the API documentation at `/docs`
 
 ## Roadmap
 
