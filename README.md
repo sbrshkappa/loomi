@@ -12,6 +12,8 @@ A modern, production-ready AI application for generating children's stories and 
 - 🔌 **REST API**: Full REST API for integration with other applications
 - 🎯 **Age-Appropriate Content**: Tailored story length and content for different age groups
 - 🔧 **Modular Architecture**: Clean, maintainable codebase following best practices
+- 🧠 **RAG Enhancement**: Optional Retrieval-Augmented Generation with Aesop's Fables and Indian tales
+- 📊 **Research Tracing**: Comprehensive metrics and performance tracking with LangSmith
 
 ## Project Structure
 
@@ -40,7 +42,25 @@ app/
 ├── utils/            # Utility functions
 │   ├── security.py   # Security utilities
 │   └── helpers.py    # General helpers
+├── research/         # Research and tracing functionality
+│   ├── tracing.py    # LangSmith integration and metrics
+│   └── rag_metrics.py # RAG performance tracking
+├── services/rag/     # RAG system components
+│   ├── integration.py # RAG integration logic
+│   ├── vector_store.py # Vector database operations
+│   └── document_processor.py # Document processing
 └── main.py           # Application entry point
+
+scripts/              # Utility scripts
+├── process_indian_tales.py    # Process Indian tales data
+├── index_indian_tales.py      # Index tales into vector store
+├── setup_vector_store.py      # Initialize vector database
+└── test_rag_*.py             # RAG testing scripts
+
+tests/                # Test suite
+├── unit/             # Unit tests
+├── integration/      # Integration tests
+└── fixtures/         # Test data and fixtures
 ```
 
 ## Quick Start
@@ -50,6 +70,8 @@ app/
 - Python 3.8+
 - OpenAI API key (or alternative AI provider)
 - Ideogram API key (for image generation)
+- **OpenVoice V2** (for audio generation) - See Audio Setup section
+- **LangSmith API key** (optional, for research tracing)
 
 ### Installation
 
@@ -61,8 +83,8 @@ app/
 
 2. **Create virtual environment**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 3. **Install dependencies**
@@ -70,13 +92,33 @@ app/
    pip install -r requirements.txt
    ```
 
-4. **Set up environment variables**
+4. **Install additional dependencies for RAG and audio**
+   ```bash
+   # For RAG functionality
+   pip install langchain-huggingface asyncpg
+   
+   # For audio generation (if not using OpenVoice)
+   pip install TTS
+   ```
+
+5. **Set up environment variables**
    ```bash
    cp env.example .env
    # Edit .env with your API keys and configuration
    ```
 
-5. **Run the application**
+6. **Set up RAG data (optional)**
+   ```bash
+   # Process and index Aesop's Fables
+   python scripts/process_aesop_fables.py
+   python scripts/setup_vector_store.py
+   
+   # Process and index Indian tales (optional)
+   python scripts/process_indian_tales.py
+   python scripts/index_indian_tales.py
+   ```
+
+7. **Run the application**
 
    **Chat Interface (Chainlit):**
    ```bash
@@ -87,6 +129,43 @@ app/
    ```bash
    python app/api/app.py
    ```
+
+## Audio Setup
+
+### OpenVoice V2 Setup (Recommended)
+
+For the best audio quality, set up OpenVoice V2:
+
+1. **Clone OpenVoice repository**
+   ```bash
+   git clone https://github.com/myshell-ai/OpenVoice.git
+   cd OpenVoice
+   ```
+
+2. **Install OpenVoice dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Download checkpoints**
+   ```bash
+   # Follow OpenVoice documentation to download checkpoints
+   # Place them in the checkpoints_v2/ directory
+   ```
+
+4. **Update audio generator path**
+   ```bash
+   # Edit app/services/ai/audio_generator.py
+   # Update CONVERTER_PATH to point to your OpenVoice checkpoints
+   ```
+
+### Alternative: TTS Setup
+
+If you prefer not to use OpenVoice, the system can fall back to TTS:
+
+```bash
+pip install TTS
+```
 
 ## Configuration
 
@@ -108,10 +187,38 @@ OPENAI_ENDPOINT=https://api.openai.com/v1
 IDEOGRAM_API_KEY=your_ideogram_api_key_here
 IDEOGRAM_ENDPOINT=https://api.ideogram.ai/api/v1
 
+# Mistral Configuration (Alternative LLM)
+MISTRAL_7B_INSTRUCT_ENDPOINT=your_mistral_endpoint_here
+MISTRAL_7B_ENDPOINT=your_mistral_endpoint_here
+RUNPOD_API_KEY=your_runpod_api_key_here
+
 # Application Configuration
 DEBUG=false
 LOG_LEVEL=INFO
 ENVIRONMENT=development
+
+# RAG Enhancement (Retrieval-Augmented Generation)
+ENABLE_RAG=false
+
+# LangSmith Configuration (for research tracing)
+LANGSMITH_API_KEY=your_langsmith_api_key_here
+LANGSMITH_PROJECT=your_langsmith_project_here
+
+# Database Configuration (for future use)
+DATABASE_URL=sqlite:///./app.db
+DATABASE_ECHO=false
+
+# Security
+SECRET_KEY=your_secret_key_here
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# File Storage
+UPLOAD_DIR=uploads
+MAX_FILE_SIZE=10485760  # 10MB
+
+# External Services
+LANGCHAIN_API_KEY=your_langchain_api_key_here
+LANGCHAIN_PROJECT=your_langchain_project_here
 ```
 
 ### AI Model Options
@@ -246,7 +353,7 @@ POST /api/v1/story
 
 ## RAG Enhancement (Retrieval-Augmented Generation)
 
-Loomi includes optional RAG enhancement that improves story quality by incorporating relevant Aesop's Fables and classic stories.
+Loomi includes optional RAG enhancement that improves story quality by incorporating relevant Aesop's Fables and Indian tales.
 
 ### Features
 - **🎯 Smart Retrieval**: Finds relevant classic fables based on user requests
@@ -254,13 +361,14 @@ Loomi includes optional RAG enhancement that improves story quality by incorpora
 - **🔄 Toggle Control**: Easy enable/disable with environment variable
 - **📊 Research Metrics**: Track RAG vs non-RAG performance
 - **🎭 Context Detection**: Automatically detects story requests
+- **🌍 Multi-Cultural**: Supports both Aesop's Fables and Indian cultural tales
 
 ### Enable RAG Enhancement
 
 **Environment Variable:**
 ```bash
 export ENABLE_RAG=true
-python -m chainlit run app/main.py
+chainlit run app/main.py
 ```
 
 **Direct Code Change:**
@@ -273,7 +381,7 @@ ENABLE_RAG = True  # Instead of False
 
 When RAG is enabled, the system:
 1. **Detects story requests** using keywords and context
-2. **Retrieves relevant fables** from a vector database of 129 Aesop's Fables
+2. **Retrieves relevant tales** from a vector database of Aesop's Fables and Indian tales
 3. **Enhances system prompts** with classic themes and moral lessons
 4. **Tracks performance metrics** for research and comparison
 
@@ -289,11 +397,11 @@ When you have all the information needed, write a complete, engaging story...
 ```
 Story Generation:
 
-**RAG Enhancement - Relevant Aesop's Fables for Inspiration:**
+**RAG Enhancement - Relevant Tales for Inspiration:**
 THE LION AND THE MOUSE: A mighty lion spares a tiny mouse's life...
-**Consider these themes from classic fables:** kindness, friendship
+**Consider these themes from classic tales:** kindness, friendship
 **Consider these character types:** lion, mouse
-**Use these classic fables as inspiration to create a new, original story...**
+**Use these classic tales as inspiration to create a new, original story...**
 
 When you have all the information needed, write a complete, engaging story...
 ```
@@ -303,6 +411,9 @@ When you have all the information needed, write a complete, engaging story...
 ```bash
 # Test RAG toggle functionality
 python tests/integration/test_rag_toggle.py
+
+# Test RAG system components
+python tests/integration/test_rag_simple.py
 
 # Run comprehensive RAG tests
 python scripts/test_rag_integration.py
@@ -314,20 +425,20 @@ python scripts/test_rag_integration.py
 - **Character Development**: Better character arcs
 - **Performance Overhead**: +2-3 seconds
 
-## Flexible Prompt System
-
-Loomi uses a modular, composable prompt architecture:
-- **Base Prompts**: For classic story structure
-- **Audio Prompts**: For expressive, narration-optimized stories
-- **Image Prompts**: For vivid illustration descriptions
-- **Prompt Factory**: Combine prompts for any output type (text, audio, image, or all)
-
 ## Testing & Continuous Integration
 
 - All tests are in the `tests/` folder (unit, integration, and fixtures)
 - Run tests with:
   ```bash
   pytest tests/
+  ```
+- Test specific components:
+  ```bash
+  # Test audio generation
+  python tests/unit/test_audio_simple.py
+  
+  # Test RAG system
+  python tests/integration/test_rag_simple.py
   ```
 - Lint, format, and type-check with:
   ```bash
@@ -353,6 +464,29 @@ pip install -r requirements-dev.txt
 - **Services**: External integrations in `app/services/`
 - **Models**: Data models in `app/models/`
 - **Utilities**: Helper functions in `app/utils/`
+- **Research**: Tracing and metrics in `app/research/`
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Chainlit Database Errors**: If you see PostgreSQL DSN errors, the system will automatically use SQLite. This is normal.
+
+2. **Missing OpenVoice**: If OpenVoice is not set up, audio generation will fall back to TTS or show an error message.
+
+3. **RAG Not Working**: Ensure you've processed and indexed the tale data:
+   ```bash
+   python scripts/process_aesop_fables.py
+   python scripts/setup_vector_store.py
+   ```
+
+4. **Audio Generation Issues**: Check that OpenVoice is properly installed and the checkpoint path is correct in `app/services/ai/audio_generator.py`.
+
+### Performance Optimization
+
+- **RAG Enhancement**: Adds ~2-3 seconds to response time but improves story quality
+- **Audio Generation**: Takes 30-60 seconds depending on story length
+- **Image Generation**: Takes 10-20 seconds per illustration
 
 ## Architecture
 
@@ -364,12 +498,16 @@ pip install -r requirements-dev.txt
 4. **Audio Generator**: Expressive, dynamic audio narration (MP3)
 5. **Chat Interface**: Interactive conversation with the AI storyteller
 6. **REST API**: Programmatic access to all functionality
+7. **RAG System**: Retrieval-augmented generation for enhanced stories
+8. **Research Tracing**: Comprehensive metrics and performance tracking
 
 ### Service Layer
 
 - **AI Services**: OpenAI, Ideogram, and other AI provider integrations
 - **Storage Services**: Database operations and file management
 - **External Services**: Third-party API integrations
+- **RAG Services**: Vector search and document processing
+- **Audio Services**: OpenVoice V2 and TTS integrations
 
 ### Data Models
 

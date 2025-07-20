@@ -77,8 +77,15 @@ zipp==3.20.2
 langchain==0.1.0
 langchain-openai==0.0.5
 langchain-community==0.0.10
+langchain-huggingface==0.0.6
 chromadb==0.4.22
 faiss-cpu==1.7.4
 sentence-transformers==2.2.2
+asyncpg==0.29.0
+
+# Audio Generation Dependencies
+TTS==0.22.0
+torch==2.1.0
+torchaudio==2.1.0
 
 
