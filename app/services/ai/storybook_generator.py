@@ -207,9 +207,12 @@ class StorybookGenerator:
         ]
         await asyncio.gather(*tasks)
         
-        # Generate PDF
+        # Generate PDF in storybooks directory
         storybook_name = sanitize_filename(title) + ".pdf"
-        self.pdf_generator.convert_images_to_pdf("images", storybook_name)
+        storybooks_dir = "storybooks"
+        os.makedirs(storybooks_dir, exist_ok=True)
+        storybook_path = os.path.join(storybooks_dir, storybook_name)
+        self.pdf_generator.convert_images_to_pdf("images", storybook_path)
         print(f"PDF created successfully: {storybook_name}")
         
         # Clean up images folder

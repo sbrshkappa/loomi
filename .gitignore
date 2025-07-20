@@ -136,6 +136,20 @@ logs/
 *.db
 *.sqlite
 audio_outputs/
+storybooks/
+debug/
+research_metrics/
+
+# Research and RAG data (keep local)
+rag_research/
+rag/
+chroma_db/
+*.json
+*.txt
+!requirements*.txt
+!env.example
+!README.md
+!.gitignore
 
 # IDE
 .vscode/

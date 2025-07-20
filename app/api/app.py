@@ -9,13 +9,14 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from app.api.routes.chat import router as chat_router
+from app.api.routes.rag_story import router as rag_router
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     
     app = FastAPI(
         title="AI Storyteller API",
-        description="API for generating children's stories and storybooks",
+        description="API for generating children's stories and storybooks with RAG enhancement",
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc"
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
     
     # Include routers
     app.include_router(chat_router)
+    app.include_router(rag_router)
     
     # Mount static files
     static_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'static')
